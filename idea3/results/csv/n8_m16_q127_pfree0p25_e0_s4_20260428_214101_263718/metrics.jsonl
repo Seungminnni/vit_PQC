@@ -1,0 +1,4 @@
+{"loss": 1.0885636806488037, "loss_support": 1.0885636806488037, "split": "train", "step": 1}
+{"best_residual_score": 16399.0, "candidate_count": 4.0, "coord_acc": 0.375, "direct_full_match": 0.0, "h_abs_error": 5.0, "post_verifier_full_match": 0.0, "pred_h_mean": 7.5, "residual_gap": 16399.0, "split": "eval", "step": 1, "support_precision": 0.3333333432674408, "support_recall": 1.0, "true_h_mean": 2.5}
+{"loss": 0.9747480154037476, "loss_support": 0.9747480154037476, "split": "train", "step": 2}
+{"best_residual_score": 16642.5, "candidate_count": 4.0, "coord_acc": 0.25, "direct_full_match": 0.0, "h_abs_error": 6.0, "post_verifier_full_match": 0.0, "pred_h_mean": 7.0, "residual_gap": 16642.5, "split": "eval", "step": 2, "support_precision": 0.1428571492433548, "support_recall": 1.0, "true_h_mean": 1.0}

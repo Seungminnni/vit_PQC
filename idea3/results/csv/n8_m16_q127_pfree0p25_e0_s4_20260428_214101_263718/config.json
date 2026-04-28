@@ -1,0 +1,28 @@
+{
+  "M": 16,
+  "batch_size": 2,
+  "d_model": 32,
+  "depth": 2,
+  "device": "cpu",
+  "dropout": 0.1,
+  "eval_batches": 1,
+  "eval_every": 1,
+  "fixed_train_h": null,
+  "freqs": [
+    1,
+    2,
+    4
+  ],
+  "log_every": 1,
+  "lr": 0.0003,
+  "n": 8,
+  "p_nonzero": 0.25,
+  "q": 127,
+  "run_name": null,
+  "seed": 42,
+  "sigma_e": 0.0,
+  "steps": 2,
+  "threshold": 0.5,
+  "uncertain_k": 2,
+  "weight_decay": 0.0001
+}

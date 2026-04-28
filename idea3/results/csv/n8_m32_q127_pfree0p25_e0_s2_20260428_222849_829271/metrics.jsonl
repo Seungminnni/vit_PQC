@@ -1,0 +1,2 @@
+{"loss": 1.393007755279541, "loss_support": 1.393007755279541, "split": "train", "step": 1}
+{"best_residual_score": 33841.5, "candidate_count": 4.0, "coord_acc": 0.25, "direct_full_match": 0.0, "h_abs_error": 6.0, "h_free_enabled": 1.0, "post_verifier_full_match": 0.0, "pred_h_mean": 8.0, "residual_gap": 33841.5, "split": "eval", "step": 1, "support_precision": 0.25, "support_recall": 1.0, "true_h_mean": 2.0}

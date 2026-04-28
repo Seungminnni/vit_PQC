@@ -1,0 +1,2 @@
+run_dir,step,coord_acc,pre_rerank_full_match,direct_full_match,candidate_hit_rate,post_rerank_full_match,post_verifier_full_match,rerank_success_given_hit,support_precision,support_recall,h_abs_error,pred_h_mean,true_h_mean,residual_gap,best_residual_score,candidate_count,reduction_factor
+results/csv/n8_m32_q127_pfree0p25_e0_s2_20260428_222849_829271,1,0.25,,0.0,,,0.0,,0.25,1.0,6.0,8.0,2.0,33841.5,33841.5,4.0,

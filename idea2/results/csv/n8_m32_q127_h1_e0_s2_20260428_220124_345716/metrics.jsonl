@@ -1,0 +1,2 @@
+{"loss": 1.162637710571289, "loss_support": 1.162637710571289, "split": "train", "step": 1}
+{"candidate_count": 4.0, "candidate_hit_rate": 1.0, "coord_acc": 0.875, "pair_filter_enabled": 0.0, "post_rerank_full_match": 1.0, "pre_rerank_full_match": 1.0, "reduction_factor": 2.0, "rerank_success_given_hit": 1.0, "residual_gap": 39224.0, "split": "eval", "step": 1}

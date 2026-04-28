@@ -21,3 +21,21 @@ idea2/results/csv/**
 idea2/results/figures/
 idea2/results/tables/
 idea2/checkpoints/
+
+# idea4 experiment workspace
+idea4/__pycache__/
+idea4/**/*.pyc
+idea4/data/
+idea4/checkpoints/
+idea4/outputs/
+
+# Keep lightweight run artifacts for reproducibility, but skip model weights.
+!idea4/runs/
+idea4/runs/**
+!idea4/runs/**/
+!idea4/runs/**/args.json
+!idea4/runs/**/best_metrics.json
+!idea4/runs/**/metrics.csv
+!idea4/runs/**/train.log
+idea4/runs/**/*.pt
+idea4/runs/**/*.pth

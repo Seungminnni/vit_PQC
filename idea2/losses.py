@@ -6,8 +6,26 @@ import torch.nn.functional as F
 from modular import circular_distance_loss, lwe_batch_dot
 
 
-def support_bce_loss(logits: torch.Tensor, support: torch.Tensor, n: int, h: int) -> torch.Tensor:
-    pos_weight = torch.tensor([(n - h) / max(h, 1)], device=logits.device, dtype=logits.dtype)
+def support_bce_loss(
+    logits: torch.Tensor,
+    support: torch.Tensor,
+    n: int,
+    h: int,
+    mode: str = "ratio",
+    const_weight: float = 1.0,
+) -> torch.Tensor:
+    ratio = (n - h) / max(h, 1)
+    if mode == "ratio":
+        weight = ratio
+    elif mode == "sqrt":
+        weight = ratio**0.5
+    elif mode == "none":
+        weight = 1.0
+    elif mode == "const":
+        weight = float(const_weight)
+    else:
+        raise ValueError(f"unsupported pos_weight mode={mode}")
+    pos_weight = torch.tensor([weight], device=logits.device, dtype=logits.dtype)
     return F.binary_cross_entropy_with_logits(logits, support.float(), pos_weight=pos_weight)
 
 
