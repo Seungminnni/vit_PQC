@@ -6,6 +6,8 @@ import random
 
 import torch
 
+from modular import lwe_batch_dot
+
 
 @dataclass
 class LWEBatch:
@@ -123,7 +125,7 @@ def generate_lwe_batch(
     else:
         s = sample_secret(batch_size, n, h, secret_type, integer_values, device)
     e = sample_noise(batch_size, M, sigma_e, noise_type, device)
-    As = torch.einsum("bmn,bn->bm", A, s)
+    As = lwe_batch_dot(A, s)
     b = torch.remainder(As + e, q)
     return LWEBatch(A=A, b=b, s=s, e=e, q=q)
 

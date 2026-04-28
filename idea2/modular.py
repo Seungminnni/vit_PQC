@@ -45,3 +45,12 @@ def centered_energy(residual_mod_q: torch.Tensor, q: int, score_type: str = "squ
         return (r.square() / (2.0 * sigma_eff * sigma_eff)).sum(dim=-1)
     return r.square().sum(dim=-1)
 
+
+def lwe_batch_dot(A: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    """Compute batched A@s without CUDA integer matmul/einsum kernels."""
+    return (A * s.unsqueeze(1)).sum(dim=-1)
+
+
+def lwe_dot(A: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    """Compute A@s without CUDA integer matmul kernels."""
+    return (A * s.unsqueeze(0)).sum(dim=-1)

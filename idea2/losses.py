@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from modular import circular_distance_loss
+from modular import circular_distance_loss, lwe_batch_dot
 
 
 def support_bce_loss(logits: torch.Tensor, support: torch.Tensor, n: int, h: int) -> torch.Tensor:
@@ -25,6 +25,5 @@ def integer_value_loss(integer_logits: torch.Tensor, s: torch.Tensor, integer_va
 
 def circular_residual_auxiliary(A: torch.Tensor, b: torch.Tensor, support_probs: torch.Tensor, q: int) -> torch.Tensor:
     s_soft = support_probs.float()
-    residual = torch.remainder(b.float() - torch.einsum("bmn,bn->bm", A.float(), s_soft), q)
+    residual = torch.remainder(b.float() - lwe_batch_dot(A.float(), s_soft), q)
     return circular_distance_loss(residual, q)
-

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import torch
 
-from modular import centered_energy, centered_int
+from modular import centered_energy, centered_int, lwe_dot
 
 
 def residual_mod_q(A: torch.Tensor, b: torch.Tensor, s_hat: torch.Tensor, q: int) -> torch.Tensor:
-    return torch.remainder(b - A.matmul(s_hat.to(A.device)), q)
+    return torch.remainder(b - lwe_dot(A, s_hat.to(A.device)), q)
 
 
 def residual_score(
@@ -69,4 +69,3 @@ def residual_gap_for_true(
     if not wrong_scores:
         return float("inf")
     return min(wrong_scores) - true_score
-

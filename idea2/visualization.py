@@ -6,7 +6,7 @@ import os
 import torch
 
 from candidate import binary_secret_from_support
-from modular import centered_int
+from modular import centered_int, lwe_dot
 from recovery import RecoveryTrace
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
@@ -71,8 +71,8 @@ def save_residual_histograms(A: torch.Tensor, b: torch.Tensor, trace: RecoveryTr
 
     true_s = binary_secret_from_support(A.shape[1], trace.true_support, A.device)
     best_s = binary_secret_from_support(A.shape[1], trace.best_support, A.device)
-    r_true = centered_int(torch.remainder(b - A.matmul(true_s), q), q).detach().cpu().float()
-    r_best = centered_int(torch.remainder(b - A.matmul(best_s), q), q).detach().cpu().float()
+    r_true = centered_int(torch.remainder(b - lwe_dot(A, true_s), q), q).detach().cpu().float()
+    r_best = centered_int(torch.remainder(b - lwe_dot(A, best_s), q), q).detach().cpu().float()
     plt.figure(figsize=(8, 4))
     bins = min(40, max(8, int(q // 4)))
     plt.hist(r_true.numpy(), bins=bins, alpha=0.65, label="true")

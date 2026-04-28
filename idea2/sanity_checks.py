@@ -5,14 +5,14 @@ import torch
 from configs import PRESETS, FeatureConfig, LWEConfig, ModelConfig, TrainConfig, CandidateConfig, ExperimentConfig
 from data import b_shuffle_batch, column_permute_batch, generate_lwe_batch
 from features.factory import encode_features
-from modular import centered_int
+from modular import centered_int, lwe_batch_dot
 from models.full_model import RHIECGModel
 from utils import resolve_device, seed_everything
 
 
 def check_generator(device) -> dict[str, float]:
     batch = generate_lwe_batch(8, n=8, M=32, q=127, h=2, sigma_e=1.0, device=device)
-    residual = centered_int(batch.b - torch.einsum("bmn,bn->bm", batch.A, batch.s), batch.q)
+    residual = centered_int(batch.b - lwe_batch_dot(batch.A, batch.s), batch.q)
     return {
         "generator_max_abs_residual": float(residual.abs().max().item()),
         "generator_mean_abs_residual": float(residual.float().abs().mean().item()),
