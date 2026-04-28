@@ -1,0 +1,16 @@
+defaults: base.yaml
+embedding:
+  use_raw: false
+  use_phase: false
+  use_rhie: true
+  use_gram: false
+  freqs: [1, 2, 4]
+  include_magnitude: true
+model:
+  name: column_transformer
+  in_channels: 8
+  d_model: 128
+  depth: 4
+  heads: 4
+  dropout: 0.1
+

@@ -1,0 +1,15 @@
+defaults: base.yaml
+lwe:
+  secret_type: ternary
+embedding:
+  use_raw: false
+  use_phase: false
+  use_rhie: true
+  use_gram: false
+  freqs: [1, 2, 4]
+  include_magnitude: true
+model:
+  name: simple_cnn
+  in_channels: 16
+  hidden_dim: 128
+

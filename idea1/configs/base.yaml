@@ -1,0 +1,35 @@
+seed: 42
+device: cuda
+lwe:
+  n: 32
+  m: 256
+  q: 257
+  h: 4
+  secret_type: binary
+  noise_type: uniform_small
+  noise_bound: 1
+embedding:
+  use_raw: false
+  use_phase: false
+  use_rhie: true
+  use_gram: false
+  freqs: [1, 2, 4]
+  include_magnitude: true
+model:
+  name: simple_cnn
+  in_channels: 8
+  hidden_dim: 128
+train:
+  batch_size: 128
+  steps: 5000
+  lr: 0.0003
+  weight_decay: 0.0001
+  log_every: 100
+  eval_every: 1000
+eval:
+  batches: 50
+  top_k: 8
+attack:
+  use_verification: true
+  candidate_k: 10
+
