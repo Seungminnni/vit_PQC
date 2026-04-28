@@ -14,7 +14,10 @@ idea1/outputs/logs/
 idea1/outputs/checkpoints/
 idea1/outputs/figures/
 idea1/outputs/tables/
-idea2/results/csv/
+idea2/results/csv/**
+!idea2/results/csv/**/
+!idea2/results/csv/**/*.json
+!idea2/results/csv/**/*.jsonl
 idea2/results/figures/
 idea2/results/tables/
 idea2/checkpoints/
