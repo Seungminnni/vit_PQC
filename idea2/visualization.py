@@ -102,3 +102,38 @@ def save_feature_heatmaps(X: torch.Tensor, path_prefix: str | Path, max_channels
         plt.tight_layout()
         plt.savefig(prefix.parent / f"{prefix.name}_ch{ch}.png", dpi=160)
         plt.close()
+
+
+def save_feature_grid(
+    X: torch.Tensor,
+    path: str | Path,
+    channel_names: list[str] | None = None,
+    max_channels: int = 36,
+    support: tuple[int, ...] | list[int] | None = None,
+) -> None:
+    import math
+    import matplotlib.pyplot as plt
+
+    C = min(max_channels, X.shape[0])
+    cols = min(4, C)
+    rows = math.ceil(C / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(4.0 * cols, 2.7 * rows), squeeze=False)
+    support = tuple(support or ())
+    for idx in range(rows * cols):
+        ax = axes[idx // cols][idx % cols]
+        if idx >= C:
+            ax.axis("off")
+            continue
+        arr = X[idx].detach().cpu().float().numpy()
+        im = ax.imshow(arr, aspect="auto", cmap="coolwarm")
+        if support:
+            for coord in support:
+                ax.axvline(coord, color="lime", linewidth=1.2, alpha=0.9)
+        name = channel_names[idx] if channel_names and idx < len(channel_names) else f"ch{idx}"
+        ax.set_title(name, fontsize=9)
+        ax.set_xlabel("coord")
+        ax.set_ylabel("eq")
+        fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+    fig.tight_layout()
+    fig.savefig(_ensure(path), dpi=150)
+    plt.close(fig)

@@ -83,6 +83,14 @@ class ExperimentConfig:
         return asdict(self)
 
 
+def dimension_run_name(lwe: LWEConfig, train: TrainConfig | None = None) -> str:
+    sigma = f"{lwe.sigma_e:g}".replace("-", "m").replace(".", "p")
+    name = f"n{lwe.n}_m{lwe.M}_q{lwe.q}_h{lwe.h}_e{sigma}"
+    if train is not None:
+        name = f"{name}_s{train.steps * train.batch_size}"
+    return name
+
+
 PRESETS: dict[str, dict[str, Any]] = {
     "stage0": {"n": 8, "M": 32, "q": 127, "h": 1, "sigma_e": 0.0, "topK": 4},
     "stage1": {"n": 10, "M": 64, "q": 127, "h": 1, "sigma_e": 0.0, "topK": 4},
@@ -151,7 +159,8 @@ def build_config(args: argparse.Namespace, secret_type: str = "binary") -> Exper
         pair_score_weight=args.pair_score_weight,
         posterior_weight=args.posterior_weight,
     )
-    return ExperimentConfig(lwe=lwe, features=features, model=model, train=train, candidate=candidate, run_name=args.run_name)
+    run_name = args.run_name or dimension_run_name(lwe, train)
+    return ExperimentConfig(lwe=lwe, features=features, model=model, train=train, candidate=candidate, run_name=run_name)
 
 
 def config_from_dict(payload: dict[str, Any]) -> ExperimentConfig:
@@ -181,7 +190,7 @@ def config_from_dict(payload: dict[str, Any]) -> ExperimentConfig:
 
 def add_common_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument("--preset", default="stage3")
-    parser.add_argument("--run_name", default="rhie_cg")
+    parser.add_argument("--run_name", default=None)
     parser.add_argument("--n", type=int, default=None)
     parser.add_argument("--M", type=int, default=None)
     parser.add_argument("--q", type=int, default=None)

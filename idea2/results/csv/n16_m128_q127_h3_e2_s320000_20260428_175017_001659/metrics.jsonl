@@ -1,0 +1,86 @@
+{"loss": 1.1455879211425781, "loss_support": 1.1455879211425781, "split": "train", "step": 1}
+{"loss": 1.1276366710662842, "loss_support": 1.1276366710662842, "split": "train", "step": 50}
+{"loss": 1.1259225606918335, "loss_support": 1.1259225606918335, "split": "train", "step": 100}
+{"loss": 1.127556324005127, "loss_support": 1.127556324005127, "split": "train", "step": 150}
+{"loss": 1.1259336471557617, "loss_support": 1.1259336471557617, "split": "train", "step": 200}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.1109375, "coord_acc": 0.26669921875, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.1109375, "pre_rerank_full_match": 0.0015625, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140812.1073199023, "split": "eval", "step": 200}
+{"loss": 1.1245309114456177, "loss_support": 1.1245309114456177, "split": "train", "step": 250}
+{"loss": 1.126044750213623, "loss_support": 1.126044750213623, "split": "train", "step": 300}
+{"loss": 1.1261606216430664, "loss_support": 1.1261606216430664, "split": "train", "step": 350}
+{"loss": 1.1252758502960205, "loss_support": 1.1252758502960205, "split": "train", "step": 400}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.1203125, "coord_acc": 0.64228515625, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.1203125, "pre_rerank_full_match": 0.0015625, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140742.69404761904, "split": "eval", "step": 400}
+{"loss": 1.1279137134552002, "loss_support": 1.1279137134552002, "split": "train", "step": 450}
+{"loss": 1.1250311136245728, "loss_support": 1.1250311136245728, "split": "train", "step": 500}
+{"loss": 1.125673770904541, "loss_support": 1.125673770904541, "split": "train", "step": 550}
+{"loss": 1.1276931762695312, "loss_support": 1.1276931762695312, "split": "train", "step": 600}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.125, "coord_acc": 0.50771484375, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.125, "pre_rerank_full_match": 0.0, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 142603.85293650796, "split": "eval", "step": 600}
+{"loss": 1.125934362411499, "loss_support": 1.125934362411499, "split": "train", "step": 650}
+{"loss": 1.1270384788513184, "loss_support": 1.1270384788513184, "split": "train", "step": 700}
+{"loss": 1.1269346475601196, "loss_support": 1.1269346475601196, "split": "train", "step": 750}
+{"loss": 1.1256933212280273, "loss_support": 1.1256933212280273, "split": "train", "step": 800}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.115625, "coord_acc": 0.68134765625, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.115625, "pre_rerank_full_match": 0.003125, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 139937.88666666666, "split": "eval", "step": 800}
+{"loss": 1.1276721954345703, "loss_support": 1.1276721954345703, "split": "train", "step": 850}
+{"loss": 1.1263941526412964, "loss_support": 1.1263941526412964, "split": "train", "step": 900}
+{"loss": 1.127357840538025, "loss_support": 1.127357840538025, "split": "train", "step": 950}
+{"loss": 1.1256093978881836, "loss_support": 1.1256093978881836, "split": "train", "step": 1000}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.115625, "coord_acc": 0.4923828125, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.115625, "pre_rerank_full_match": 0.0, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 141543.53726190477, "split": "eval", "step": 1000}
+{"loss": 1.1134909391403198, "loss_support": 1.1134909391403198, "split": "train", "step": 1050}
+{"loss": 1.0580646991729736, "loss_support": 1.0580646991729736, "split": "train", "step": 1100}
+{"loss": 0.9384865760803223, "loss_support": 0.9384865760803223, "split": "train", "step": 1150}
+{"loss": 0.6198968887329102, "loss_support": 0.6198968887329102, "split": "train", "step": 1200}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.83125, "coord_acc": 0.83046875, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.83125, "pre_rerank_full_match": 0.384375, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 139001.99602649323, "split": "eval", "step": 1200}
+{"loss": 0.5616245865821838, "loss_support": 0.5616245865821838, "split": "train", "step": 1250}
+{"loss": 0.36889010667800903, "loss_support": 0.36889010667800903, "split": "train", "step": 1300}
+{"loss": 0.29819825291633606, "loss_support": 0.29819825291633606, "split": "train", "step": 1350}
+{"loss": 0.27966418862342834, "loss_support": 0.27966418862342834, "split": "train", "step": 1400}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.9671875, "coord_acc": 0.95048828125, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.9671875, "pre_rerank_full_match": 0.85625, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 139003.38495263958, "split": "eval", "step": 1400}
+{"loss": 0.21283426880836487, "loss_support": 0.21283426880836487, "split": "train", "step": 1450}
+{"loss": 0.23569314181804657, "loss_support": 0.23569314181804657, "split": "train", "step": 1500}
+{"loss": 0.14429444074630737, "loss_support": 0.14429444074630737, "split": "train", "step": 1550}
+{"loss": 0.233017235994339, "loss_support": 0.233017235994339, "split": "train", "step": 1600}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.9796875, "coord_acc": 0.96435546875, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.9796875, "pre_rerank_full_match": 0.884375, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 139444.22819527338, "split": "eval", "step": 1600}
+{"loss": 0.1111554205417633, "loss_support": 0.1111554205417633, "split": "train", "step": 1650}
+{"loss": 0.1035984605550766, "loss_support": 0.1035984605550766, "split": "train", "step": 1700}
+{"loss": 0.1046065241098404, "loss_support": 0.1046065241098404, "split": "train", "step": 1750}
+{"loss": 0.10416975617408752, "loss_support": 0.10416975617408752, "split": "train", "step": 1800}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.9921875, "coord_acc": 0.9865234375, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.9921875, "pre_rerank_full_match": 0.946875, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140018.3931795635, "split": "eval", "step": 1800}
+{"loss": 0.06761051714420319, "loss_support": 0.06761051714420319, "split": "train", "step": 1850}
+{"loss": 0.12497030198574066, "loss_support": 0.12497030198574066, "split": "train", "step": 1900}
+{"loss": 0.04535914212465286, "loss_support": 0.04535914212465286, "split": "train", "step": 1950}
+{"loss": 0.08878125250339508, "loss_support": 0.08878125250339508, "split": "train", "step": 2000}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.9953125, "coord_acc": 0.99208984375, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.9953125, "pre_rerank_full_match": 0.9703125, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140588.5946356567, "split": "eval", "step": 2000}
+{"loss": 0.06653894484043121, "loss_support": 0.06653894484043121, "split": "train", "step": 2050}
+{"loss": 0.1267116367816925, "loss_support": 0.1267116367816925, "split": "train", "step": 2100}
+{"loss": 0.05562949925661087, "loss_support": 0.05562949925661087, "split": "train", "step": 2150}
+{"loss": 0.05880006030201912, "loss_support": 0.05880006030201912, "split": "train", "step": 2200}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.996875, "coord_acc": 0.988671875, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.996875, "pre_rerank_full_match": 0.9625, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140814.6494295635, "split": "eval", "step": 2200}
+{"loss": 0.02190449647605419, "loss_support": 0.02190449647605419, "split": "train", "step": 2250}
+{"loss": 0.053354814648628235, "loss_support": 0.053354814648628235, "split": "train", "step": 2300}
+{"loss": 0.04241817444562912, "loss_support": 0.04241817444562912, "split": "train", "step": 2350}
+{"loss": 0.059808649122714996, "loss_support": 0.059808649122714996, "split": "train", "step": 2400}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.996875, "coord_acc": 0.99453125, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.996875, "pre_rerank_full_match": 0.9796875, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140305.53333333333, "split": "eval", "step": 2400}
+{"loss": 0.08798946440219879, "loss_support": 0.08798946440219879, "split": "train", "step": 2450}
+{"loss": 0.04894249141216278, "loss_support": 0.04894249141216278, "split": "train", "step": 2500}
+{"loss": 0.015030311420559883, "loss_support": 0.015030311420559883, "split": "train", "step": 2550}
+{"loss": 0.1025036945939064, "loss_support": 0.1025036945939064, "split": "train", "step": 2600}
+{"candidate_count": 56.0, "candidate_hit_rate": 1.0, "coord_acc": 0.99501953125, "pair_filter_enabled": 0.0, "post_rerank_full_match": 1.0, "pre_rerank_full_match": 0.98125, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140841.2234375, "split": "eval", "step": 2600}
+{"loss": 0.0288509801030159, "loss_support": 0.0288509801030159, "split": "train", "step": 2650}
+{"loss": 0.09281507879495621, "loss_support": 0.09281507879495621, "split": "train", "step": 2700}
+{"loss": 0.045200884342193604, "loss_support": 0.045200884342193604, "split": "train", "step": 2750}
+{"loss": 0.05538478493690491, "loss_support": 0.05538478493690491, "split": "train", "step": 2800}
+{"candidate_count": 56.0, "candidate_hit_rate": 0.9921875, "coord_acc": 0.9931640625, "pair_filter_enabled": 0.0, "post_rerank_full_match": 0.9921875, "pre_rerank_full_match": 0.9765625, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 141499.0026801715, "split": "eval", "step": 2800}
+{"loss": 0.03602931648492813, "loss_support": 0.03602931648492813, "split": "train", "step": 2850}
+{"loss": 0.020016256719827652, "loss_support": 0.020016256719827652, "split": "train", "step": 2900}
+{"loss": 0.06408680975437164, "loss_support": 0.06408680975437164, "split": "train", "step": 2950}
+{"loss": 0.045082565397024155, "loss_support": 0.045082565397024155, "split": "train", "step": 3000}
+{"candidate_count": 56.0, "candidate_hit_rate": 1.0, "coord_acc": 0.997265625, "pair_filter_enabled": 0.0, "post_rerank_full_match": 1.0, "pre_rerank_full_match": 0.9859375, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 139404.6484375, "split": "eval", "step": 3000}
+{"loss": 0.005717785097658634, "loss_support": 0.005717785097658634, "split": "train", "step": 3050}
+{"loss": 0.07504826039075851, "loss_support": 0.07504826039075851, "split": "train", "step": 3100}
+{"loss": 0.029877495020627975, "loss_support": 0.029877495020627975, "split": "train", "step": 3150}
+{"loss": 0.07397273927927017, "loss_support": 0.07397273927927017, "split": "train", "step": 3200}
+{"candidate_count": 56.0, "candidate_hit_rate": 1.0, "coord_acc": 0.99853515625, "pair_filter_enabled": 0.0, "post_rerank_full_match": 1.0, "pre_rerank_full_match": 0.9921875, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 140303.271875, "split": "eval", "step": 3200}
+{"loss": 0.027810368686914444, "loss_support": 0.027810368686914444, "split": "train", "step": 3250}
+{"loss": 0.03248879313468933, "loss_support": 0.03248879313468933, "split": "train", "step": 3300}
+{"loss": 0.027454223483800888, "loss_support": 0.027454223483800888, "split": "train", "step": 3350}
+{"loss": 0.07192590832710266, "loss_support": 0.07192590832710266, "split": "train", "step": 3400}
+{"candidate_count": 56.0, "candidate_hit_rate": 1.0, "coord_acc": 0.99580078125, "pair_filter_enabled": 0.0, "post_rerank_full_match": 1.0, "pre_rerank_full_match": 0.9921875, "reduction_factor": 10.0, "rerank_success_given_hit": 1.0, "residual_gap": 138951.4, "split": "eval", "step": 3400}
