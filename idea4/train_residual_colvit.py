@@ -50,6 +50,14 @@ def parse_args():
     parser.add_argument("--step_size", type=float, default=0.5)
     parser.add_argument("--loss_rec_weight", type=float, default=0.1)
     parser.add_argument("--loss_sparse_weight", type=float, default=0.01)
+    parser.add_argument("--pos_weight_mode", choices=["none", "auto", "const"], default="none")
+    parser.add_argument("--pos_weight", type=float, default=1.0)
+    parser.add_argument(
+        "--decode_mode",
+        choices=["auto", "threshold", "top_h", "val_threshold", "mean_score", "median_score", "largest_gap"],
+        default="auto",
+        help="auto uses top-h for h-aware fixed_h and threshold otherwise.",
+    )
     parser.add_argument("--run_dir", type=str, default=None)
     parser.add_argument("--save_best", action="store_true")
     parser.add_argument("--log_interval", type=int, default=1)
@@ -93,9 +101,26 @@ def build_toy_dataset(args, num_samples=None, support_pool=None):
     return TensorDataset(A, b, labels)
 
 
-def predict_support(logits, h):
+def predict_support(logits, h, threshold=0.0, mode="threshold"):
+    if mode == "mean_score":
+        p = torch.sigmoid(logits)
+        return (p > p.mean(dim=1, keepdim=True)).float()
+    if mode == "median_score":
+        p = torch.sigmoid(logits)
+        return (p > p.median(dim=1, keepdim=True).values).float()
+    if mode == "largest_gap":
+        p = torch.sigmoid(logits)
+        sorted_p, sorted_idx = torch.sort(p, dim=1, descending=True)
+        if p.size(1) == 1:
+            return torch.ones_like(p)
+        gaps = sorted_p[:, :-1] - sorted_p[:, 1:]
+        k = gaps.argmax(dim=1) + 1
+        preds = torch.zeros_like(p)
+        for row, k_row in enumerate(k.tolist()):
+            preds[row, sorted_idx[row, :k_row]] = 1.0
+        return preds
     if h is None:
-        return (logits > 0).float()
+        return (logits > threshold).float()
     if h == 0:
         return torch.zeros_like(logits)
     topk = torch.topk(logits, k=h, dim=1).indices
@@ -104,9 +129,9 @@ def predict_support(logits, h):
     return preds
 
 
-def compute_metrics(logits, labels, A, b, h, q):
+def compute_metrics(logits, labels, A, b, h, q, threshold=0.0, decode_mode="threshold"):
     p = torch.sigmoid(logits)
-    preds = predict_support(logits, h)
+    preds = predict_support(logits, h, threshold=threshold, mode=decode_mode)
 
     coord_acc = (preds == labels).float().mean().item()
     exact_match = (preds == labels).all(dim=1).float().mean().item()
@@ -246,6 +271,83 @@ def build_train_val_test_datasets(args, log_path):
     return train_dataset, val_dataset, test_dataset
 
 
+def labels_from_dataset(dataset):
+    if isinstance(dataset, TensorDataset):
+        return dataset.tensors[2]
+    if isinstance(dataset, Subset):
+        labels = labels_from_dataset(dataset.dataset)
+        return labels[dataset.indices]
+    raise TypeError(f"Unsupported dataset type for label extraction: {type(dataset)}")
+
+
+def build_bce_loss(args, train_dataset, device):
+    if args.pos_weight_mode == "none":
+        return nn.BCEWithLogitsLoss()
+    if args.pos_weight_mode == "const":
+        weight = float(args.pos_weight)
+    else:
+        labels = labels_from_dataset(train_dataset).float()
+        pos_rate = labels.mean().item()
+        pos_rate = min(max(pos_rate, 1e-6), 1.0 - 1e-6)
+        weight = (1.0 - pos_rate) / pos_rate
+    pos_weight = torch.tensor([weight], dtype=torch.float32, device=device)
+    return nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+
+
+def decode_h_for_args(args):
+    if args.decode_mode == "top_h":
+        return args.h
+    if args.decode_mode in ("threshold", "val_threshold", "mean_score", "median_score", "largest_gap"):
+        return None
+    if args.secret_mode == "fixed_h" and not args.blind_h:
+        return args.h
+    return None
+
+
+@torch.no_grad()
+def collect_eval_tensors(loader, model, device):
+    model.eval()
+    logits_parts = []
+    labels_parts = []
+    A_parts = []
+    b_parts = []
+    for A, b, labels in loader:
+        A = A.to(device)
+        b = b.to(device)
+        labels = labels.to(device)
+        logits, _ = model(A, b)
+        logits_parts.append(logits)
+        labels_parts.append(labels)
+        A_parts.append(A)
+        b_parts.append(b)
+    return (
+        torch.cat(logits_parts, dim=0),
+        torch.cat(labels_parts, dim=0),
+        torch.cat(A_parts, dim=0),
+        torch.cat(b_parts, dim=0),
+    )
+
+
+@torch.no_grad()
+def calibrate_threshold(loader, model, args, device):
+    logits, labels, _, _ = collect_eval_tensors(loader, model, device)
+    flat = logits.flatten()
+    quantiles = torch.linspace(0.01, 0.99, 99, device=flat.device)
+    candidates = torch.unique(torch.cat([torch.tensor([0.0], device=flat.device), torch.quantile(flat, quantiles)]))
+    best_threshold = 0.0
+    best_exact = -1.0
+    best_hamming = float("inf")
+    for threshold in candidates:
+        preds = predict_support(logits, None, threshold=float(threshold.item()))
+        exact = (preds == labels).all(dim=1).float().mean().item()
+        hamming = (preds != labels).float().sum(dim=1).mean().item()
+        if exact > best_exact or (exact == best_exact and hamming < best_hamming):
+            best_exact = exact
+            best_hamming = hamming
+            best_threshold = float(threshold.item())
+    return best_threshold
+
+
 def flatten_metrics(epoch, split, metrics):
     row = {
         "epoch": epoch,
@@ -255,7 +357,7 @@ def flatten_metrics(epoch, split, metrics):
     return row
 
 
-def run_epoch(loader, training, model, optimizer, criterion, args, device):
+def run_epoch(loader, training, model, optimizer, criterion, args, device, decode_threshold=0.0):
     model.train(training)
     total_samples = 0
     total_loss = 0.0
@@ -276,7 +378,8 @@ def run_epoch(loader, training, model, optimizer, criterion, args, device):
         "hard_circular_loss": 0.0,
     }
 
-    h_for_pred = args.h if args.secret_mode == "fixed_h" and not args.blind_h else None
+    h_for_pred = decode_h_for_args(args)
+    metric_decode_mode = args.decode_mode if args.decode_mode in ("mean_score", "median_score", "largest_gap") else "threshold"
     context = torch.enable_grad() if training else torch.no_grad()
     with context:
         for A, b, labels in loader:
@@ -305,7 +408,16 @@ def run_epoch(loader, training, model, optimizer, criterion, args, device):
                 loss.backward()
                 optimizer.step()
 
-            metrics = compute_metrics(logits, labels, A, b, h_for_pred, args.q)
+            metrics = compute_metrics(
+                logits,
+                labels,
+                A,
+                b,
+                h_for_pred,
+                args.q,
+                threshold=decode_threshold,
+                decode_mode=metric_decode_mode,
+            )
             batch_size = labels.size(0)
             total_samples += batch_size
             total_loss += loss.item() * batch_size
@@ -347,6 +459,8 @@ def main():
     print(f"[INFO] Metrics CSV: {metrics_path}")
     print(f"[INFO] Train log: {log_path}")
     print(f"[INFO] Column image channels: {COLUMN_IMAGE_CHANNELS}")
+    print(f"[INFO] Decode mode: {args.decode_mode}")
+    print(f"[INFO] Pos weight mode: {args.pos_weight_mode}")
 
     with open(args_path, "w", encoding="utf-8") as f:
         json.dump(vars(args), f, indent=2, ensure_ascii=False)
@@ -370,7 +484,7 @@ def main():
     ).to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = build_bce_loss(args, train_dataset, device)
 
     csv_columns = [
         "epoch",
@@ -395,6 +509,7 @@ def main():
     best_epoch = None
     best_train_metrics = None
     best_test_metrics = None
+    best_decode_threshold = 0.0
 
     with open(metrics_path, "w", newline="", encoding="utf-8") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
@@ -402,7 +517,19 @@ def main():
 
         for epoch in range(args.epochs):
             train_metrics = run_epoch(train_loader, True, model, optimizer, criterion, args, device)
-            val_metrics = run_epoch(val_loader, False, model, optimizer, criterion, args, device)
+            val_decode_threshold = 0.0
+            if args.decode_mode == "val_threshold":
+                val_decode_threshold = calibrate_threshold(val_loader, model, args, device)
+            val_metrics = run_epoch(
+                val_loader,
+                False,
+                model,
+                optimizer,
+                criterion,
+                args,
+                device,
+                decode_threshold=val_decode_threshold,
+            )
 
             writer.writerow(
                 flatten_metrics(epoch + 1, "train", to_serializable_dict(train_metrics))
@@ -428,6 +555,7 @@ def main():
                 f"train_hard_res={train_metrics['hard_residual_abs_mean']:.3f} "
                 f"train_hard_circ={train_metrics['hard_circular_loss']:.3f} | "
                 f"val_loss={val_metrics['loss']:.4f} "
+                f"val_thr={val_decode_threshold:.3f} "
                 f"val_acc={val_metrics['coord_acc']*100:.2f}% "
                 f"val_exact={val_metrics['exact_match']*100:.2f}% "
                 f"val_hamm={val_metrics['hamming_distance']:.2f} "
@@ -460,11 +588,13 @@ def main():
                 best_epoch = epoch + 1
                 best_train_metrics = to_serializable_dict(train_metrics)
                 best_test_metrics = to_serializable_dict(val_metrics)
+                best_decode_threshold = val_decode_threshold
                 best_state_dict = copy.deepcopy(model.state_dict())
                 best_payload = {
                     "best_epoch": best_epoch,
                     "best_train_metrics": best_train_metrics,
                     "best_val_metrics": best_test_metrics,
+                    "best_decode_threshold": best_decode_threshold,
                     "args": vars(args),
                 }
                 with open(best_metrics_path, "w", encoding="utf-8") as f:
@@ -477,6 +607,7 @@ def main():
                             "model_state_dict": model.state_dict(),
                             "optimizer_state_dict": optimizer.state_dict(),
                             "args": vars(args),
+                            "decode_threshold": best_decode_threshold,
                             "train_metrics": best_train_metrics,
                             "val_metrics": best_test_metrics,
                         },
@@ -485,7 +616,16 @@ def main():
 
     if best_epoch is not None:
         model.load_state_dict(best_state_dict)
-        final_test_metrics = run_epoch(test_loader, False, model, optimizer, criterion, args, device)
+        final_test_metrics = run_epoch(
+            test_loader,
+            False,
+            model,
+            optimizer,
+            criterion,
+            args,
+            device,
+            decode_threshold=best_decode_threshold,
+        )
         with open(metrics_path, "a", newline="", encoding="utf-8") as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
             writer.writerow(flatten_metrics(best_epoch, "test", to_serializable_dict(final_test_metrics)))
@@ -496,6 +636,7 @@ def main():
                     "best_epoch": best_epoch,
                     "best_train_metrics": best_train_metrics,
                     "best_val_metrics": best_test_metrics,
+                    "best_decode_threshold": best_decode_threshold,
                     "final_test_metrics": final_test_metrics,
                     "args": vars(args),
                 },
@@ -505,6 +646,7 @@ def main():
             )
         best_line = (
             f"[BEST] epoch={best_epoch} "
+            f"decode_thr={best_decode_threshold:.3f} "
             f"val_exact={best_test_metrics['exact_match']*100:.2f}% "
             f"val_hard_res={best_test_metrics['hard_residual_abs_mean']:.3f} "
             f"val_hard_circ={best_test_metrics['hard_circular_loss']:.3f} | "
