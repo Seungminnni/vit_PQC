@@ -15,6 +15,7 @@ class LWEDatasetSpec:
     num_samples: int
     params: LWEParams
     representation: RepresentationConfig
+    return_image: bool = True
     h_setting: str = "iid"
     p_nonzero: float | None = None
     fixed_h: int | None = None
@@ -42,10 +43,7 @@ class SyntheticLWEDataset(Dataset):
         return self.spec.num_samples
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        image, mask = self.encoder.encode(self.sample.A[idx], self.sample.b[idx])
-        return {
-            "image": image.squeeze(0),
-            "mask": mask.squeeze(0),
+        item = {
             "target": self.sample.s_labels[idx],
             "secret": self.sample.s[idx],
             "A": self.sample.A[idx],
@@ -54,6 +52,11 @@ class SyntheticLWEDataset(Dataset):
             "oracle_residual": self.sample.e[idx],
             "h": (self.sample.s[idx] != 0).sum().to(torch.long),
         }
+        if self.spec.return_image:
+            image, mask = self.encoder.encode(self.sample.A[idx], self.sample.b[idx])
+            item["image"] = image.squeeze(0)
+            item["mask"] = mask.squeeze(0)
+        return item
 
     def _generate(self) -> LWESample:
         device = torch.device("cpu")

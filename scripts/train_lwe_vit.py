@@ -22,6 +22,8 @@ from lwe_vit import (  # noqa: E402
     LWEParams,
     LWEViTConfig,
     LWEViTForSecret,
+    PairTokenLWEConfig,
+    PairTokenLWETransformer,
     RepresentationConfig,
     SyntheticLWEDataset,
     batch_statistics,
@@ -35,6 +37,7 @@ from lwe_vit import (  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train relation-preserving LWE ViT secret recovery model.")
+    parser.add_argument("--model", choices=["pair_token", "vit_patch"], default="pair_token")
     parser.add_argument("--n", type=int, default=16)
     parser.add_argument("--m", type=int, default=None)
     parser.add_argument("--q", type=int, default=257)
@@ -95,7 +98,7 @@ def normalize_args(args: argparse.Namespace) -> argparse.Namespace:
         args.patch_cols = 1
     if args.run_name is None:
         args.run_name = (
-            f"{args.representation}_{args.secret_dist}_n{args.n}_m{args.m}_q{args.q}_"
+            f"{args.model}_{args.representation}_{args.secret_dist}_n{args.n}_m{args.m}_q{args.q}_"
             f"noise{args.noise_width:g}_{args.h_setting}_seed{args.seed}"
         )
     args.run_dir = args.output_dir / args.run_name
@@ -167,6 +170,7 @@ def make_dataset(args: argparse.Namespace, run_seed: int, num_samples: int, offs
             num_samples=num_samples,
             params=params,
             representation=rep,
+            return_image=args.model == "vit_patch",
             h_setting=args.h_setting,
             p_nonzero=args.p_nonzero,
             fixed_h=args.fixed_h,
@@ -245,8 +249,6 @@ def run_epoch(
 
     with context:
         for batch in loader:
-            image = batch["image"].to(device, non_blocking=True)
-            mask = batch["mask"].to(device, non_blocking=True)
             target = batch["target"].to(device, non_blocking=True)
             secret = batch["secret"].to(device, non_blocking=True)
             A = batch["A"].to(device, non_blocking=True)
@@ -256,7 +258,12 @@ def run_epoch(
             if training:
                 optimizer.zero_grad(set_to_none=True)
 
-            out = model(image, mask)
+            if getattr(model, "input_kind", "image") == "pair":
+                out = model(A, b)
+            else:
+                image = batch["image"].to(device, non_blocking=True)
+                mask = batch["mask"].to(device, non_blocking=True)
+                out = model(image, mask)
             logits = out.s_logits
             ce = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), target.reshape(-1), weight=class_weights)
             residual_loss = residual_consistency_loss(
@@ -303,6 +310,7 @@ def run_epoch(
 def base_config(args: argparse.Namespace, run_seed: int, num_parameters: int, class_weight_list: list[float]) -> dict[str, object]:
     row = {
         "run_name": args.run_name,
+        "model": args.model,
         "seed": run_seed,
         "n": args.n,
         "m": args.m,
@@ -362,20 +370,34 @@ def train_single_seed(args: argparse.Namespace, run_seed: int, device: torch.dev
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=pin_memory)
 
     num_classes = num_secret_classes(args.secret_dist, q=args.q)
-    model = LWEViTForSecret(
-        LWEViTConfig(
-            n=args.n,
-            q=args.q,
-            in_channels=train_dataset.in_channels,
-            num_secret_classes=num_classes,
-            patch_rows=args.patch_rows,
-            patch_cols=args.patch_cols,
-            embed_dim=args.embed_dim,
-            depth=args.depth,
-            num_heads=args.num_heads,
-            dropout=args.dropout,
-        )
-    ).to(device)
+    if args.model == "pair_token":
+        model = PairTokenLWETransformer(
+            PairTokenLWEConfig(
+                n=args.n,
+                m=args.m,
+                q=args.q,
+                num_secret_classes=num_classes,
+                embed_dim=args.embed_dim,
+                depth=args.depth,
+                num_heads=args.num_heads,
+                dropout=args.dropout,
+            )
+        ).to(device)
+    else:
+        model = LWEViTForSecret(
+            LWEViTConfig(
+                n=args.n,
+                q=args.q,
+                in_channels=train_dataset.in_channels,
+                num_secret_classes=num_classes,
+                patch_rows=args.patch_rows,
+                patch_cols=args.patch_cols,
+                embed_dim=args.embed_dim,
+                depth=args.depth,
+                num_heads=args.num_heads,
+                dropout=args.dropout,
+            )
+        ).to(device)
     num_parameters = sum(parameter.numel() for parameter in model.parameters())
     class_weights, class_weight_list = build_class_weights(train_stats, num_classes, args.class_weight_mode, device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)

@@ -13,6 +13,8 @@ from lwe_vit import (  # noqa: E402
     LWEDatasetSpec,
     LWEViTConfig,
     LWEViTForSecret,
+    PairTokenLWEConfig,
+    PairTokenLWETransformer,
     RectangularPatchTokenizer,
     RepresentationConfig,
     SyntheticLWEDataset,
@@ -118,6 +120,35 @@ class LWEViTTests(unittest.TestCase):
             )
         )
         out = model(image, mask)
+        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
+        self.assertEqual(tuple(out.residual_score.shape), (2,))
+
+    def test_pair_token_model_forward_without_image_encoding(self) -> None:
+        params = LWEParams(n=6, m=10, q=17, secret_dist="binary", noise_dist="zero", seed=11)
+        dataset = SyntheticLWEDataset(
+            LWEDatasetSpec(
+                num_samples=3,
+                params=params,
+                representation=RepresentationConfig(name="relation_grid"),
+                return_image=False,
+                h_setting="fixed_h",
+                fixed_h=2,
+            )
+        )
+        item = dataset[0]
+        self.assertNotIn("image", item)
+        model = PairTokenLWETransformer(
+            PairTokenLWEConfig(
+                n=params.n,
+                m=params.m,
+                q=params.q,
+                num_secret_classes=num_secret_classes(params),
+                embed_dim=32,
+                depth=1,
+                num_heads=4,
+            )
+        )
+        out = model(dataset.sample.A[:2], dataset.sample.b[:2])
         self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
         self.assertEqual(tuple(out.residual_score.shape), (2,))
 
