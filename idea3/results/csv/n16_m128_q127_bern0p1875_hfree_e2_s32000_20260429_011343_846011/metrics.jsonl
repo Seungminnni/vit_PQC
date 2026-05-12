@@ -1,2 +1,0 @@
-{"loss": 1.1728191375732422, "loss_pos_weight": 4.333333333333333, "loss_support": 1.1728191375732422, "split": "train", "step": 1}
-{"loss": 0.927338719367981, "loss_pos_weight": 4.333333333333333, "loss_support": 0.927338719367981, "split": "train", "step": 50}

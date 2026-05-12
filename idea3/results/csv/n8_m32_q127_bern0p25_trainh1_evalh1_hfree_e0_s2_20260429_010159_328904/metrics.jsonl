@@ -1,2 +1,0 @@
-{"loss": 1.006994366645813, "loss_pos_weight": 3.0, "loss_support": 1.006994366645813, "split": "train", "step": 1}
-{"best_score": 35481.0, "candidate_contains_true": 0.0, "candidate_count": 4.0, "coord_acc": 0.875, "direct_full_match": 0.0, "h_abs_error": 1.0, "h_free_enabled": 1.0, "post_verifier_full_match": 0.0, "pred_h_mean": 0.0, "residual_gap": 35481.0, "split": "eval", "step": 1, "support_f1": 0.0, "support_precision": 0.0, "support_recall": 0.0, "true_h_mean": 1.0, "true_residual_score": 0.0}
