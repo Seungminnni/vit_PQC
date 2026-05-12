@@ -25,6 +25,8 @@ from lwe_vit import (  # noqa: E402
     PairTokenLWEConfig,
     PairTokenLWETransformer,
     RepresentationConfig,
+    RowBlockLWEConfig,
+    RowBlockLWETransformer,
     SyntheticLWEDataset,
     batch_statistics,
     dataset_statistics,
@@ -37,7 +39,7 @@ from lwe_vit import (  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train relation-preserving LWE ViT secret recovery model.")
-    parser.add_argument("--model", choices=["pair_token", "vit_patch"], default="pair_token")
+    parser.add_argument("--model", choices=["row_block", "pair_token", "vit_patch"], default="row_block")
     parser.add_argument("--n", type=int, default=16)
     parser.add_argument("--m", type=int, default=None)
     parser.add_argument("--q", type=int, default=257)
@@ -53,6 +55,9 @@ def parse_args() -> argparse.Namespace:
     parser.set_defaults(add_rhs_column=True)
     parser.add_argument("--patch-rows", "--patch_rows", dest="patch_rows", type=int, default=4)
     parser.add_argument("--patch-cols", "--patch_cols", dest="patch_cols", type=int, default=4)
+    parser.add_argument("--block-rows", "--block_rows", dest="block_rows", type=int, default=1)
+    parser.add_argument("--block-cols", "--block_cols", dest="block_cols", type=int, default=16)
+    parser.add_argument("--fourier-k", "--fourier_k", dest="fourier_k", type=int, default=2)
     parser.add_argument("--h-setting", "--h_setting", dest="h_setting", choices=["iid", "fixed_h", "variable_h", "bernoulli"], default="variable_h")
     parser.add_argument("--fixed-h", "--fixed_h", dest="fixed_h", type=int, default=None)
     parser.add_argument("--h-min", "--h_min", dest="h_min", type=int, default=None)
@@ -96,9 +101,23 @@ def normalize_args(args: argparse.Namespace) -> argparse.Namespace:
         args.p_nonzero = min(1.0, 3.0 / max(args.n, 1))
     if args.representation == "row_equation_tokens" and args.patch_cols == 4:
         args.patch_cols = 1
+    if args.model == "row_block":
+        if args.block_rows <= 0 or args.block_cols <= 0:
+            raise ValueError("block_rows and block_cols must be positive.")
+        if args.block_cols > args.n:
+            args.block_cols = args.n
+        if args.m % args.block_rows != 0:
+            raise ValueError(f"m={args.m} must be divisible by block_rows={args.block_rows}.")
+        if args.n % args.block_cols != 0:
+            raise ValueError(f"n={args.n} must be divisible by block_cols={args.block_cols}.")
+        if args.fourier_k < 0:
+            raise ValueError("fourier_k must be non-negative.")
     if args.run_name is None:
+        model_tag = args.model
+        if args.model == "row_block":
+            model_tag = f"row_block_br{args.block_rows}_bc{args.block_cols}_k{args.fourier_k}"
         args.run_name = (
-            f"{args.model}_{args.representation}_{args.secret_dist}_n{args.n}_m{args.m}_q{args.q}_"
+            f"{model_tag}_{args.representation}_{args.secret_dist}_n{args.n}_m{args.m}_q{args.q}_"
             f"noise{args.noise_width:g}_{args.h_setting}_seed{args.seed}"
         )
     args.run_dir = args.output_dir / args.run_name
@@ -258,7 +277,7 @@ def run_epoch(
             if training:
                 optimizer.zero_grad(set_to_none=True)
 
-            if getattr(model, "input_kind", "image") == "pair":
+            if getattr(model, "input_kind", "image") in {"pair", "row_block"}:
                 out = model(A, b)
             else:
                 image = batch["image"].to(device, non_blocking=True)
@@ -324,6 +343,9 @@ def base_config(args: argparse.Namespace, run_seed: int, num_parameters: int, cl
         "add_rhs_column": args.add_rhs_column,
         "patch_rows": args.patch_rows,
         "patch_cols": args.patch_cols,
+        "block_rows": args.block_rows,
+        "block_cols": args.block_cols,
+        "fourier_k": args.fourier_k,
         "h_setting": args.h_setting,
         "fixed_h": args.fixed_h,
         "h_min": args.h_min,
@@ -370,7 +392,23 @@ def train_single_seed(args: argparse.Namespace, run_seed: int, device: torch.dev
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=pin_memory)
 
     num_classes = num_secret_classes(args.secret_dist, q=args.q)
-    if args.model == "pair_token":
+    if args.model == "row_block":
+        model = RowBlockLWETransformer(
+            RowBlockLWEConfig(
+                n=args.n,
+                m=args.m,
+                q=args.q,
+                num_secret_classes=num_classes,
+                block_rows=args.block_rows,
+                block_cols=args.block_cols,
+                fourier_k=args.fourier_k,
+                embed_dim=args.embed_dim,
+                depth=args.depth,
+                num_heads=args.num_heads,
+                dropout=args.dropout,
+            )
+        ).to(device)
+    elif args.model == "pair_token":
         model = PairTokenLWETransformer(
             PairTokenLWEConfig(
                 n=args.n,

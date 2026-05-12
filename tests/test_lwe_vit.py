@@ -17,6 +17,8 @@ from lwe_vit import (  # noqa: E402
     PairTokenLWETransformer,
     RectangularPatchTokenizer,
     RepresentationConfig,
+    RowBlockLWEConfig,
+    RowBlockLWETransformer,
     SyntheticLWEDataset,
     batch_statistics,
     dataset_statistics,
@@ -143,6 +145,38 @@ class LWEViTTests(unittest.TestCase):
                 m=params.m,
                 q=params.q,
                 num_secret_classes=num_secret_classes(params),
+                embed_dim=32,
+                depth=1,
+                num_heads=4,
+            )
+        )
+        out = model(dataset.sample.A[:2], dataset.sample.b[:2])
+        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
+        self.assertEqual(tuple(out.residual_score.shape), (2,))
+
+    def test_row_block_model_forward_without_image_encoding(self) -> None:
+        params = LWEParams(n=8, m=12, q=17, secret_dist="binary", noise_dist="zero", seed=12)
+        dataset = SyntheticLWEDataset(
+            LWEDatasetSpec(
+                num_samples=3,
+                params=params,
+                representation=RepresentationConfig(name="relation_grid"),
+                return_image=False,
+                h_setting="fixed_h",
+                fixed_h=2,
+            )
+        )
+        item = dataset[0]
+        self.assertNotIn("image", item)
+        model = RowBlockLWETransformer(
+            RowBlockLWEConfig(
+                n=params.n,
+                m=params.m,
+                q=params.q,
+                num_secret_classes=num_secret_classes(params),
+                block_rows=1,
+                block_cols=4,
+                fourier_k=2,
                 embed_dim=32,
                 depth=1,
                 num_heads=4,

@@ -16,7 +16,15 @@ from .lwe import (
     secret_value_table,
 )
 from .metrics import batch_statistics, decode_predictions, finalize_statistics, merge_statistics
-from .model import PairTokenLWEConfig, PairTokenLWETransformer, LWEViTConfig, LWEViTForSecret, LWEViTOutput
+from .model import (
+    LWEViTConfig,
+    LWEViTForSecret,
+    LWEViTOutput,
+    PairTokenLWEConfig,
+    PairTokenLWETransformer,
+    RowBlockLWEConfig,
+    RowBlockLWETransformer,
+)
 from .representations import LWEImageEncoder, RepresentationConfig
 from .tokenization import PatchTokens, RectangularPatchTokenizer
 
@@ -33,6 +41,8 @@ __all__ = [
     "PatchTokens",
     "RectangularPatchTokenizer",
     "RepresentationConfig",
+    "RowBlockLWEConfig",
+    "RowBlockLWETransformer",
     "SyntheticLWEDataset",
     "batch_statistics",
     "centered_mod",
