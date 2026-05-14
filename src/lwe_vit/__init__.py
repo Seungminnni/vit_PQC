@@ -4,7 +4,7 @@ from .losses import (
     residual_consistency_loss,
     secret_cross_entropy_loss,
 )
-from .data import LWEDatasetSpec, SyntheticLWEDataset, dataset_statistics
+from .data import LWEDatasetSpec, OnTheFlySyntheticLWEDataset, SyntheticLWEDataset, dataset_statistics
 from .lwe import (
     LWEParams,
     LWESample,
@@ -17,11 +17,11 @@ from .lwe import (
 )
 from .metrics import batch_statistics, decode_predictions, finalize_statistics, merge_statistics
 from .model import (
-    LWEViTConfig,
-    LWEViTForSecret,
+    EquationLWETransformer,
+    EquationTransformerConfig,
     LWEViTOutput,
-    PairTokenLWEConfig,
-    PairTokenLWETransformer,
+    RowLocalCNNLWEConfig,
+    RowLocalCNNLWEModel,
     RowBlockLWEConfig,
     RowBlockLWETransformer,
 )
@@ -33,14 +33,15 @@ __all__ = [
     "LWESample",
     "LWEDatasetSpec",
     "LWEImageEncoder",
-    "LWEViTConfig",
-    "LWEViTForSecret",
+    "EquationLWETransformer",
+    "EquationTransformerConfig",
     "LWEViTOutput",
-    "PairTokenLWEConfig",
-    "PairTokenLWETransformer",
+    "OnTheFlySyntheticLWEDataset",
     "PatchTokens",
     "RectangularPatchTokenizer",
     "RepresentationConfig",
+    "RowLocalCNNLWEConfig",
+    "RowLocalCNNLWEModel",
     "RowBlockLWEConfig",
     "RowBlockLWETransformer",
     "SyntheticLWEDataset",

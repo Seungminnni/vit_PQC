@@ -8,15 +8,16 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from lwe_vit import (  # noqa: E402
+    EquationLWETransformer,
+    EquationTransformerConfig,
     LWEImageEncoder,
     LWEParams,
     LWEDatasetSpec,
-    LWEViTConfig,
-    LWEViTForSecret,
-    PairTokenLWEConfig,
-    PairTokenLWETransformer,
+    OnTheFlySyntheticLWEDataset,
     RectangularPatchTokenizer,
     RepresentationConfig,
+    RowLocalCNNLWEConfig,
+    RowLocalCNNLWEModel,
     RowBlockLWEConfig,
     RowBlockLWETransformer,
     SyntheticLWEDataset,
@@ -91,7 +92,7 @@ class LWEViTTests(unittest.TestCase):
 
         self.assertTrue(torch.equal(residual, sample.e))
 
-    def test_patch_tokenizer_and_model_forward(self) -> None:
+    def test_patch_tokenizer_forward(self) -> None:
         params = LWEParams(n=8, m=16, q=17, secret_dist="binary", noise_dist="zero", seed=1)
         sample = sample_lwe_batch(params, batch_size=2)
         rep = RepresentationConfig(name="relation_grid", patch_rows=4, patch_cols=4)
@@ -107,52 +108,6 @@ class LWEViTTests(unittest.TestCase):
         patches = tokenizer(image, mask)
         self.assertEqual(patches.tokens.shape[:2], (2, 12))
         self.assertTrue(patches.mask.all().item())
-
-        model = LWEViTForSecret(
-            LWEViTConfig(
-                n=params.n,
-                q=params.q,
-                in_channels=encoder.num_channels(),
-                num_secret_classes=num_secret_classes(params),
-                patch_rows=rep.patch_rows,
-                patch_cols=rep.patch_cols,
-                embed_dim=32,
-                depth=1,
-                num_heads=4,
-            )
-        )
-        out = model(image, mask)
-        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
-        self.assertEqual(tuple(out.residual_score.shape), (2,))
-
-    def test_pair_token_model_forward_without_image_encoding(self) -> None:
-        params = LWEParams(n=6, m=10, q=17, secret_dist="binary", noise_dist="zero", seed=11)
-        dataset = SyntheticLWEDataset(
-            LWEDatasetSpec(
-                num_samples=3,
-                params=params,
-                representation=RepresentationConfig(name="relation_grid"),
-                return_image=False,
-                h_setting="fixed_h",
-                fixed_h=2,
-            )
-        )
-        item = dataset[0]
-        self.assertNotIn("image", item)
-        model = PairTokenLWETransformer(
-            PairTokenLWEConfig(
-                n=params.n,
-                m=params.m,
-                q=params.q,
-                num_secret_classes=num_secret_classes(params),
-                embed_dim=32,
-                depth=1,
-                num_heads=4,
-            )
-        )
-        out = model(dataset.sample.A[:2], dataset.sample.b[:2])
-        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
-        self.assertEqual(tuple(out.residual_score.shape), (2,))
 
     def test_row_block_model_forward_without_image_encoding(self) -> None:
         params = LWEParams(n=8, m=12, q=17, secret_dist="binary", noise_dist="zero", seed=12)
@@ -176,13 +131,71 @@ class LWEViTTests(unittest.TestCase):
                 num_secret_classes=num_secret_classes(params),
                 block_rows=1,
                 block_cols=4,
-                fourier_k=2,
+                residue_encoding="phase",
                 embed_dim=32,
                 depth=1,
                 num_heads=4,
             )
         )
         out = model(dataset.sample.A[:2], dataset.sample.b[:2])
+        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
+        self.assertEqual(tuple(out.residual_score.shape), (2,))
+
+    def test_row_block_model_forward_with_raw_residues(self) -> None:
+        params = LWEParams(n=8, m=12, q=17, secret_dist="binary", noise_dist="zero", seed=13)
+        sample = sample_lwe_batch(params, batch_size=2)
+        model = RowBlockLWETransformer(
+            RowBlockLWEConfig(
+                n=params.n,
+                m=params.m,
+                q=params.q,
+                num_secret_classes=num_secret_classes(params),
+                block_rows=1,
+                block_cols=4,
+                residue_encoding="raw",
+                embed_dim=32,
+                depth=1,
+                num_heads=4,
+            )
+        )
+        out = model(sample.A, sample.b)
+        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
+        self.assertEqual(tuple(out.residual_score.shape), (2,))
+
+    def test_equation_transformer_forward_with_raw_residues(self) -> None:
+        params = LWEParams(n=8, m=12, q=17, secret_dist="binary", noise_dist="zero", seed=14)
+        sample = sample_lwe_batch(params, batch_size=2)
+        model = EquationLWETransformer(
+            EquationTransformerConfig(
+                n=params.n,
+                m=params.m,
+                q=params.q,
+                num_secret_classes=num_secret_classes(params),
+                residue_encoding="raw",
+                embed_dim=32,
+                depth=1,
+                num_heads=4,
+            )
+        )
+        out = model(sample.A, sample.b)
+        self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
+        self.assertEqual(tuple(out.residual_score.shape), (2,))
+
+    def test_row_local_cnn_forward_with_raw_residues(self) -> None:
+        params = LWEParams(n=8, m=12, q=17, secret_dist="binary", noise_dist="zero", seed=15)
+        sample = sample_lwe_batch(params, batch_size=2)
+        model = RowLocalCNNLWEModel(
+            RowLocalCNNLWEConfig(
+                n=params.n,
+                m=params.m,
+                q=params.q,
+                num_secret_classes=num_secret_classes(params),
+                residue_encoding="raw",
+                embed_dim=32,
+                depth=1,
+            )
+        )
+        out = model(sample.A, sample.b)
         self.assertEqual(tuple(out.s_logits.shape), (2, params.n, 2))
         self.assertEqual(tuple(out.residual_score.shape), (2,))
 
@@ -202,6 +215,77 @@ class LWEViTTests(unittest.TestCase):
 
         self.assertEqual(loss.dim(), 0)
         self.assertTrue(torch.isfinite(loss).item())
+
+    def test_residual_consistency_loss_prefers_correct_secret(self) -> None:
+        params = LWEParams(n=6, m=12, q=257, secret_dist="binary", noise_dist="zero", seed=21)
+        dataset = SyntheticLWEDataset(
+            LWEDatasetSpec(
+                num_samples=8,
+                params=params,
+                representation=RepresentationConfig(name="relation_grid"),
+                h_setting="fixed_h",
+                fixed_h=2,
+            )
+        )
+        sample = dataset.sample
+        correct_logits = torch.full((8, params.n, 2), -40.0)
+        correct_logits.scatter_(-1, sample.s_labels.unsqueeze(-1), 40.0)
+        wrong_logits = torch.full_like(correct_logits, -40.0)
+        wrong_logits[:, :, 0] = 40.0
+
+        correct_loss = residual_consistency_loss(
+            sample.A,
+            sample.b,
+            correct_logits,
+            q=params.q,
+            secret_dist=params.secret_dist,
+            noise_bound=0.5,
+        )
+        wrong_loss = residual_consistency_loss(
+            sample.A,
+            sample.b,
+            wrong_logits,
+            q=params.q,
+            secret_dist=params.secret_dist,
+            noise_bound=0.5,
+        )
+
+        self.assertLess(correct_loss.item(), 1e-8)
+        self.assertGreater(wrong_loss.item(), correct_loss.item())
+
+    def test_residual_metrics_reject_wrong_secret(self) -> None:
+        params = LWEParams(n=8, m=32, q=257, secret_dist="binary", noise_dist="zero", seed=22)
+        dataset = SyntheticLWEDataset(
+            LWEDatasetSpec(
+                num_samples=16,
+                params=params,
+                representation=RepresentationConfig(name="relation_grid"),
+                h_setting="fixed_h",
+                fixed_h=2,
+            )
+        )
+        sample = dataset.sample
+        wrong_logits = torch.full((16, params.n, 2), -20.0)
+        wrong_logits[:, :, 0] = 20.0
+
+        batch_stats = batch_statistics(
+            logits=wrong_logits,
+            target_labels=sample.s_labels,
+            secret=sample.s,
+            A=sample.A,
+            b=sample.b,
+            oracle_residual=sample.e,
+            q=params.q,
+            noise_width=1.0,
+            residual_success_factor=2.0,
+            secret_dist=params.secret_dist,
+        )
+        metrics = finalize_statistics(merge_statistics([batch_stats]), num_classes=2)
+
+        self.assertEqual(metrics["exact_match"], 0.0)
+        self.assertEqual(metrics["support_recall"], 0.0)
+        self.assertLess(metrics["residual_success_rate"], 1.0)
+        self.assertGreater(metrics["pred_residual_std_mean"], metrics["oracle_residual_std_mean"])
 
     def test_dataset_and_metrics_perfect_prediction(self) -> None:
         params = LWEParams(n=8, m=16, q=257, secret_dist="binary", noise_dist="zero", seed=5)
@@ -238,6 +322,65 @@ class LWEViTTests(unittest.TestCase):
         self.assertEqual(metrics["exact_match"], 1.0)
         self.assertEqual(metrics["support_f1"], 1.0)
         self.assertEqual(metrics["residual_success_rate"], 1.0)
+
+    def test_on_the_fly_dataset_is_deterministic_and_split_separated(self) -> None:
+        params = LWEParams(n=8, m=16, q=257, secret_dist="binary", noise_dist="discrete_gaussian", noise_width=1.0, seed=11)
+        spec = LWEDatasetSpec(
+            num_samples=1000000,
+            params=params,
+            representation=RepresentationConfig(name="relation_grid"),
+            return_image=False,
+            h_setting="fixed_h",
+            fixed_h=2,
+        )
+        dataset = OnTheFlySyntheticLWEDataset(spec)
+
+        first = dataset[123]
+        again = dataset[123]
+        for key in ("A", "b", "secret", "target", "noise", "oracle_residual"):
+            self.assertTrue(torch.equal(first[key], again[key]), key)
+
+        other_split = OnTheFlySyntheticLWEDataset(
+            LWEDatasetSpec(
+                num_samples=1000000,
+                params=LWEParams(
+                    n=8,
+                    m=16,
+                    q=257,
+                    secret_dist="binary",
+                    noise_dist="discrete_gaussian",
+                    noise_width=1.0,
+                    seed=23,
+                ),
+                representation=RepresentationConfig(name="relation_grid"),
+                return_image=False,
+                h_setting="fixed_h",
+                fixed_h=2,
+            )
+        )
+        self.assertFalse(torch.equal(first["A"], other_split[123]["A"]))
+        self.assertTrue(torch.equal(residual_from_secret(first["A"], first["b"], first["secret"], params.q).squeeze(0), first["noise"]))
+
+    def test_on_the_fly_dataset_statistics_are_analytic(self) -> None:
+        params = LWEParams(n=16, m=512, q=257, secret_dist="binary", noise_dist="discrete_gaussian", noise_width=1.0, seed=11)
+        dataset = OnTheFlySyntheticLWEDataset(
+            LWEDatasetSpec(
+                num_samples=1000000,
+                params=params,
+                representation=RepresentationConfig(name="relation_grid"),
+                return_image=False,
+                h_setting="fixed_h",
+                fixed_h=2,
+            )
+        )
+
+        stats = dataset_statistics(dataset)
+
+        self.assertEqual(stats["avg_h"], 2.0)
+        self.assertEqual(stats["std_h"], 0.0)
+        self.assertEqual(stats["class_prob_0"], 0.875)
+        self.assertEqual(stats["class_prob_1"], 0.125)
+        self.assertEqual(stats["nonzero_rate"], 0.125)
 
 
 if __name__ == "__main__":

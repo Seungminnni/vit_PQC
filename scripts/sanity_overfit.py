@@ -10,11 +10,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from lwe_vit import (  # noqa: E402
-    LWEImageEncoder,
     LWEParams,
-    LWEViTConfig,
-    LWEViTForSecret,
-    RepresentationConfig,
+    RowBlockLWEConfig,
+    RowBlockLWETransformer,
     num_secret_classes,
     residual_consistency_loss,
     sample_lwe_batch,
@@ -40,18 +38,16 @@ def main() -> None:
         seed=7,
     )
     sample = sample_lwe_batch(params, batch_size=args.dataset_size, device=args.device)
-    rep = RepresentationConfig(name="relation_grid", patch_rows=4, patch_cols=4, use_phase=True)
-    encoder = LWEImageEncoder(rep, q=params.q)
-    image, mask = encoder.encode(sample.A, sample.b)
 
-    model = LWEViTForSecret(
-        LWEViTConfig(
+    model = RowBlockLWETransformer(
+        RowBlockLWEConfig(
             n=params.n,
+            m=params.m,
             q=params.q,
-            in_channels=encoder.num_channels(),
             num_secret_classes=num_secret_classes(params),
-            patch_rows=rep.patch_rows,
-            patch_cols=rep.patch_cols,
+            block_rows=1,
+            block_cols=params.n,
+            residue_encoding="raw",
             embed_dim=64,
             depth=2,
             num_heads=4,
@@ -61,17 +57,18 @@ def main() -> None:
 
     for step in range(1, args.steps + 1):
         idx = torch.randint(args.dataset_size, (args.batch_size,), device=args.device)
-        out = model(image[idx], mask[idx])
+        out = model(sample.A[idx], sample.b[idx])
         ce = secret_cross_entropy_loss(out.s_logits, sample.s_labels[idx])
-        rc = residual_consistency_loss(
-            sample.A[idx],
-            sample.b[idx],
-            out.s_logits,
-            q=params.q,
-            secret_dist=params.secret_dist,
-            noise_bound=params.noise_width + 0.5,
-        )
-        loss = ce + 0.05 * rc
+        with torch.no_grad():
+            rc = residual_consistency_loss(
+                sample.A[idx],
+                sample.b[idx],
+                out.s_logits.detach(),
+                q=params.q,
+                secret_dist=params.secret_dist,
+                noise_bound=params.noise_width + 0.5,
+            )
+        loss = ce
         opt.zero_grad(set_to_none=True)
         loss.backward()
         opt.step()

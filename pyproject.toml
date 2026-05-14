@@ -7,7 +7,11 @@ name = "lwe-vit"
 version = "0.1.0"
 description = "Relation-preserving LWE image and token encoders for ViT secret recovery experiments."
 requires-python = ">=3.10"
-dependencies = ["torch>=2.0"]
+dependencies = [
+    "matplotlib>=3.7",
+    "torch>=2.0",
+    "tqdm>=4.66",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
